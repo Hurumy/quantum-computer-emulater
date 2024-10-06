@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <complex>
+
 class Matrix {
 	private:
 		const int row = 2;
@@ -9,11 +11,13 @@ class Matrix {
 	public:
 		union{
 			struct{
-				float	a,b,
-						c,d;
+				complex<double>	a,b,
+								c,d;
 			};
-			float val[row][col];
+			complex<double> val[row][col];
 		};
+		Matrix	Matrix();
+		Matrix	Matrix(complex<double> a_, complex<double> b_, complex<double> c_, complex<double> d_);
 		Matrix& operator=(const Matrix& A);
 		Matrix	operator+();
 		Matrix	operator-();

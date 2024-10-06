@@ -1,5 +1,10 @@
 
+#pragma once
+
 #include "Matrix.hpp"
+
+Matrix	Matrix(complex<double> a_, complex<double> b_, complex<double> c_, complex<double> d_): a(a_), b(b_), c(c_), d(d_)
+{}
 
 Matrix& Matrix::operator=(const Matrix& A)
 {
