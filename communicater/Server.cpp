@@ -7,8 +7,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define PORT 8000
-
 bool	Server::makeSocket(unsigned int port)
 {
     // make a socket
@@ -22,7 +20,7 @@ bool	Server::makeSocket(unsigned int port)
     memset((char *)&serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = INADDR_ANY;
-    serv_addr.sin_port = htons(PORT);
+    serv_addr.sin_port = htons(port);
     if (bind(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
         perror("binding fails");
         return -1;
@@ -52,6 +50,8 @@ int main() {
     char buffer[256];
     struct sockaddr_in serv_addr, cli_addr;
     int n;
+
+	makeSocket(8000);
 
     // listen
     listen(sockfd, 5);
