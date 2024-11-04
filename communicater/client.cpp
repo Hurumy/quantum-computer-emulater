@@ -21,6 +21,7 @@ int main(int argc, char *argv[]) {
         exit(0);
     }
 
+	printf("making socket start.\n");
     // ソケットを作成する
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
@@ -28,6 +29,7 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
+	printf("gethostbyname start.\n");
     // サーバーのホスト名を取得する
     server = gethostbyname(argv[1]);
     if (server == NULL) {
@@ -42,12 +44,14 @@ int main(int argc, char *argv[]) {
            server->h_length);
     serv_addr.sin_port = htons(PORT);
 
+	printf("connect start.\n");
     // サーバーに接続する
     if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
         perror("ERROR connecting");
         exit(1);
     }
 
+	printf("sending start.\n");
     // データを送信する
     memset(buffer, 0, 256);
     strcpy(buffer, argv[2]);
@@ -57,6 +61,7 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
+	printf("receiving start.\n");
     // データを受信する
     memset(buffer, 0, 256);
     n = recv(sockfd, buffer, 255, 0);
