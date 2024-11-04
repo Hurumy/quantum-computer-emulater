@@ -104,7 +104,7 @@ int Server::connectNewClient()
 int Server::recvMsg(int clifd)
 {
 	errno = 0;
-	int recvsize = recv(clifd, &_recv_data[0], sizeof(char), 0);
+	int recvsize = recv(clifd, &_recv_data[0], sizeof(_recv_data), 0);
 	if (recvsize < 0 && errno != EAGAIN) {
 		perror("recv failed: ");
 		return -1;
