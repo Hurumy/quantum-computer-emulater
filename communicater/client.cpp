@@ -1,78 +1,85 @@
 
-#include <netdb.h>
-#include <netinet/in.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
+#include "Client.hpp"
 
-#define PORT 8000
+#include <iostream>
+#include <iomanip>
 
-int main(int argc, char *argv[]) {
-    int sockfd, n;
-    struct sockaddr_in serv_addr;
-    struct hostent *server;
-    char buffer[256];
+Client::Client(int port, std::string hostname){
+	makeSocket();
+	getHostByName(hostname);
+	setServInfo(port);
+	connect();
+}
 
-    if (argc < 3) {
-        fprintf(stderr, "usage %s hostname message\n", argv[0]);
-        exit(0);
-    }
+Client::~Client() {
+	close(_sockfd);
+}
 
-	printf("making socket start.\n");
-    // ソケットを作成する
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0) {
+int Client::makeSocket() {
+    _sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (_sockfd < 0) {
         perror("ERROR opening socket");
         exit(1);
     }
+	return 0;
+}
 
-	printf("gethostbyname start.\n");
-    // サーバーのホスト名を取得する
-    server = gethostbyname(argv[1]);
-    if (server == NULL) {
-        fprintf(stderr, "ERROR, no such host\n");
-        exit(0);
+int Client::getHostByName(std::string hostname) {
+    _serverinfo = gethostbyname(hostname.c_str());
+    if (_serverinfo == NULL) {
+        perror("no such host");
+        exit(-1);
     }
+	return 0;
+}
 
-    // 接続先アドレスを設定する
-    memset((char *)&serv_addr, 0, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    memcpy((char *)&serv_addr.sin_addr.s_addr, (char *)server->h_addr,
-           server->h_length);
-    serv_addr.sin_port = htons(PORT);
+int Client::setServInfo(int port) {
+    memset((char *)&_serv_addr, 0, sizeof(_serv_addr));
+    _serv_addr.sin_family = AF_INET;
+    memcpy((char *)&_serv_addr.sin_addr.s_addr, (char *)_serverinfo->h_addr,
+		  _serverinfo->h_length);
+    _serv_addr.sin_port = htons(port);
+}
 
-	printf("connect start.\n");
-    // サーバーに接続する
-    if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+int Client::connect() {
+    if (::connect(_sockfd, (struct sockaddr *)&_serv_addr, sizeof(_serv_addr)) < 0) {
         perror("ERROR connecting");
         exit(1);
     }
+}
 
-	printf("sending start.\n");
-    // データを送信する
-    memset(buffer, 0, 256);
-    strcpy(buffer, argv[2]);
-    n = send(sockfd, buffer, strlen(buffer), 0);
+int Client::sendMsg(std::string p) {
+    int n = send(_sockfd, p.c_str(), p.size(), 0);
     if (n < 0) {
         perror("ERROR writing to socket");
         exit(1);
     }
 
-	printf("receiving start.\n");
-    // データを受信する
-    memset(buffer, 0, 256);
-    n = recv(sockfd, buffer, 255, 0);
+	// packet check
+    n = recv(_sockfd, &_buf[0], sizeof(_buf), 0);
     if (n < 0) {
         perror("ERROR reading from socket");
         exit(1);
     }
+	_buf[n] = '\0';
+	if (strcmp(_buf, "===RECEIVED===") == 0)
+		return 0;
+	return n;
+}
 
-    printf("Message from server: %s\n", buffer);
+int Client::recvMsg(std::string p) {
+    int n = recv(_sockfd, &_buf[0], sizeof(_buf), 0);
+    if (n < 0) {
+        perror("ERROR reading from socket");
+        exit(1);
+    }
+	_buf[n] = '\0';
+	std::cout << "MSG: " << _buf << std::endl;
+}
 
-    close(sockfd);
+int main(int argc, char *argv[]) {
+	Client c(8000, "localhost");
+	c.sendMsg("Hello from server!");
 
     return 0;
 }
