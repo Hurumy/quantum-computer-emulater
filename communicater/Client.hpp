@@ -14,7 +14,7 @@ class Client {
 		Client(int port, std::string hostname);
 		~Client();
 		int sendMsg(std::string p);
-		int recvMsg(std::string p);
+		int recvMsg();
 
 	protected:
 		int makeSocket();

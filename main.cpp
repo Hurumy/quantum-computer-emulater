@@ -22,10 +22,12 @@ void serverThread() {
 }
 
 void qbyteParserThread() {
-	char tmp[256];
+	char tmp[100];
 	char*	tmphead;
+	char	c;
 
-	tmphead = &tmp[0];
+	tmphead = tmp;
+	memset(tmp, 0, 100);
 
 	while (1) {
 		if (!rb.canRead()) {
@@ -33,14 +35,24 @@ void qbyteParserThread() {
 			continue;
 		}
 
-		*tmphead = rb.read(1).c_str()[0];
+		c = rb.read(1).c_str()[0];
+		if (c == 'Q') {
+			tmphead = tmp;
+			*tmphead = 'Q';
+		} else {
+			*tmphead = c;
+		}
 		tmphead ++;
+		*tmphead = '\0';
 
-		if (strncmp(&tmp[0], "QBIT a:", 7) == 0 && strncmp((tmphead-4), " END", 4) == 0) {
-			std::string s(tmp, sizeof(tmphead-tmp));
+		if (tmphead - tmp > sizeof(tmp))
+			tmphead = &tmp[0];
+
+		if (strncmp(tmp, "QBIT a:", 7) == 0 && strncmp(tmphead-4, " END", 4) == 0) {
+			std::string s(tmp, (tmphead-tmp)*sizeof(char));
 			packets.push_back(s);
 			std::cout << "Packet: " << s << std::endl;
-			tmphead = &tmp[0];
+			tmphead = tmp;
 		}
 	}
 }

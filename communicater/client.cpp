@@ -67,7 +67,7 @@ int Client::sendMsg(std::string p) {
 	return n;
 }
 
-int Client::recvMsg(std::string p) {
+int Client::recvMsg() {
     int n = recv(_sockfd, &_buf[0], sizeof(_buf), 0);
     if (n < 0) {
         perror("ERROR reading from socket");
@@ -77,12 +77,11 @@ int Client::recvMsg(std::string p) {
 	std::cout << "MSG: " << _buf << std::endl;
 }
 
-/*
 int main(int argc, char *argv[]) {
 	Client c(8000, "localhost");
-	c.sendMsg("Hello from server!");
+	c.sendMsg("QBIT a:1 b:0 END\0");
+	c.recvMsg();
 
     return 0;
 }
-*/
 
