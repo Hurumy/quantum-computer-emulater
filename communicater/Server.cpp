@@ -105,11 +105,14 @@ int Server::recvMsg(int clifd)
 {
 	errno = 0;
 	int recvsize = recv(clifd, &_recv_data[0], sizeof(_recv_data), 0);
-	if (recvsize < 0 && errno != EAGAIN) {
+	if (errno == ECONNRESET)
+		return -1;
+	else if (recvsize < 0 && errno != EAGAIN) {
 		perror("recv failed: ");
 		return -1;
 	}
 	_recv_data[recvsize] = '\0';
+	sendMsg(clifd, "===RECEIVED===\0", 15);
 
 	return recvsize;
 }
@@ -137,8 +140,10 @@ int Server::mainLoop()
 					sendMsg(_clifd, _write_content.c_str(), _write_content.size());
 				} else {
 					std::cout << "start receiving on: " << _clifd << std::endl;
-					recvMsg(_clifd);
-					std::cout << "MSG: " << _recv_data << std::endl;
+					if (recvMsg(_clifd))
+						std::cout << "MSG: " << _recv_data << std::endl;
+					else
+						break;
 				}
 			}
 		}
