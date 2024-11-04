@@ -77,10 +77,12 @@ int Client::recvMsg(std::string p) {
 	std::cout << "MSG: " << _buf << std::endl;
 }
 
+/*
 int main(int argc, char *argv[]) {
 	Client c(8000, "localhost");
 	c.sendMsg("Hello from server!");
 
     return 0;
 }
+*/
 

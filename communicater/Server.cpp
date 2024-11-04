@@ -1,6 +1,8 @@
 
 #include "Server.hpp"
+#include "RingBuffer.hpp"
 
+#include <csignal>
 #include <string>
 #include <iostream>
 #include <iomanip>
@@ -12,10 +14,11 @@ Server::Server(unsigned int port)
 {
 	_tv.tv_sec = 0;
 	_tv.tv_usec = 100000; // 100msec
-	memset(_recv_data, 0, sizeof(_recv_data));
 	makeSocket(port);
 	FD_ZERO(&_fds);
 	_write_flag = false;
+
+	std::signal(SIGPIPE, SIG_IGN);
 }
 
 Server::~Server()
@@ -63,8 +66,8 @@ bool	Server::sendMsg(unsigned int cli_fd, const char *msg, size_t len)
 	int n;
     n = send(cli_fd, msg, len, 0);
     if (n < 0) {
-        perror("sending failed");
-        return -1;
+		perror("Server/sending failed");
+        return false;
     }
 	return true;
 }
@@ -94,9 +97,9 @@ int Server::connectNewClient()
 	unsigned int len;
 
 	listen(_sockfd, 1);
-	std::cout << "listen success." << std::endl;
+	std::cout << "\tlisten success." << std::endl;
 	_clifd = accept(_sockfd, &ad, &len);
-	std::cout << "accept client." << std::endl;
+	std::cout << "\taccept client." << std::endl;
 	FD_SET(_clifd, &_fds);
 	return 0;
 }
@@ -104,14 +107,16 @@ int Server::connectNewClient()
 int Server::recvMsg(int clifd)
 {
 	errno = 0;
-	int recvsize = recv(clifd, &_recv_data[0], sizeof(_recv_data), 0);
+	int recvsize = recv(clifd, &_buf[0], _RECV_SIZE, 0);
 	if (errno == ECONNRESET)
 		return -1;
 	else if (recvsize < 0 && errno != EAGAIN) {
 		perror("recv failed: ");
 		return -1;
 	}
-	_recv_data[recvsize] = '\0';
+	_buf[recvsize] = '\0';
+
+	_rb->write(_buf, recvsize);
 	sendMsg(clifd, "===RECEIVED===\0", 15);
 
 	return recvsize;
@@ -139,26 +144,32 @@ int Server::mainLoop()
 					_write_flag = false;
 					sendMsg(_clifd, _write_content.c_str(), _write_content.size());
 				} else {
-					std::cout << "start receiving on: " << _clifd << std::endl;
+					std::cout << "\tstart receiving on: " << _clifd << std::endl;
 					if (recvMsg(_clifd))
-						std::cout << "MSG: " << _recv_data << std::endl;
+						std::cout << "MSG: " << _buf << std::endl;
 					else
 						break;
 				}
 			}
 		}
+
 		closeConnection(_clifd);
-		std::cout << "Connection Closed." << std::endl;
-		std::cout << "Waiting for next connection." << std::endl;
+		std::cout << "\tConnection Closed." << std::endl;
+		std::cout << "\tWaiting for next connection." << std::endl;
 	}
 	return 0;
 }
 
+int Server::setBuffer(RingBuffer *p) {
+	_rb = p;
+}
+
+/*
 int main() {
 	Server s(8000);
-	std::cout << "server start." << std::endl;
+	std::cout << "\tserver start." << std::endl;
 	s.mainLoop();
 
     return 0;
 }
-
+*/
