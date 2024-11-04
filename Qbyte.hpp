@@ -2,7 +2,7 @@
 
 #include "emulater/Qbit.hpp"
 
-#include <vector>
+#include <list>
 #include <sstream>
 
 class Qbyte {

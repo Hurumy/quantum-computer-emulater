@@ -42,5 +42,10 @@ int Qbyte::setFromPacket(std::string p) {
 	return 0;
 }
 
-
+int	Qbyte::out() const {
+	for (size_t i=0; i<_bits.size(); i++) {
+		std::cout << _bits[i] << std::endl;
+	}
+	return 0;
+}
 

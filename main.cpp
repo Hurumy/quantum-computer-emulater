@@ -10,10 +10,11 @@
 #include <iostream>
 #include <iomanip>
 #include <string>
+#include <list>
 
 RingBuffer rb;
 
-std::vector<std::string> packets;
+std::list<std::string> packets;
 
 void serverThread() {
 	Server s(8000);
@@ -21,7 +22,7 @@ void serverThread() {
 	s.mainLoop();
 }
 
-void qbyteParserThread() {
+void packetParserThread() {
 	char tmp[100];
 	char*	tmphead;
 	char	c;
@@ -35,6 +36,7 @@ void qbyteParserThread() {
 			continue;
 		}
 
+		// read 1 byte
 		c = rb.read(1).c_str()[0];
 		if (c == 'Q') {
 			tmphead = tmp;
@@ -48,6 +50,7 @@ void qbyteParserThread() {
 		if (tmphead - tmp > sizeof(tmp))
 			tmphead = &tmp[0];
 
+		// Format check and make a bunch
 		if (strncmp(tmp, "QBIT a:", 7) == 0 && strncmp(tmphead-4, " END", 4) == 0) {
 			std::string s(tmp, (tmphead-tmp)*sizeof(char));
 			packets.push_back(s);
@@ -57,13 +60,34 @@ void qbyteParserThread() {
 	}
 }
 
+void	makeQbits() {
+	Qbyte qb;
+	std::string tmp;
+
+	while (1) {
+		// No Packets -> Sleep
+		if (packets.size() == 0) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+			continue;
+		}
+
+		tmp = packets.front;
+		packets.pop_front();
+		qb.setFromPacket(tmp);
+		qb.out();
+	}
+}
+
 
 int main() {
 	// Fork a Server
 	std::thread t1(serverThread);
 
 	// Receiving a msg
-	qbyteParserThread();
+	std::thread t2(packetParserThread);
+
+	// Parsing a msg
+	makeQbits();
 
 	return 0;
 }

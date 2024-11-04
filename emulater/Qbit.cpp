@@ -4,6 +4,11 @@
 #include <math>
 #include <cstdlib>
 
+Qbit::Qbit(std::complex<double> a, std::complex<double> b){
+	amp_a = a;
+	amp_b = b;
+}
+
 void	Qbit::setAmp_a(double real, double imag)
 {
 	amp_a.real = real;

@@ -19,6 +19,7 @@ class Qbit
 	protected:
 	
 	public:
+		Qbit(std::complex<double> a, std::complex<double> b);
 		void	setAmp_a(double real, double imag);
 		void	setAmp_b(double real, double imag);
 		void	setPhase(double p);
